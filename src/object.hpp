@@ -5,15 +5,15 @@ class object {
 	public:
 		double x, y, mass;
 		double vx, vy;
-		quadNode* node;
+		int node;
 		object(double x, double y, double mass);	
 		object(double x, double y);	
-		void grabNode(quadTree* tree);
-		void propogate();
-		void doGrav(quadNode* cluster, double dt);
-		void gravTick(quadNode* root, double dt);
+		void grabNode(quadTree& tree);
+		void propogate(quadTree& tree);
+		void doGrav(quadTree& tree, int cluster, double dt);
+		void gravTick(quadTree& tree, int node, double dt);
 		void physTick(double dt);
-		void refine();
+		void refine(quadTree& tree);
 };
 
 #endif

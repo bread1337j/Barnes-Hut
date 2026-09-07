@@ -4,7 +4,7 @@ project(my_project)
 find_package(raylib 3.0 REQUIRED)
 
 set(CMAKE_CXX_STANDARD 26) 
-
+set(CMAKE_BUILD_TYPE Release)
 
 add_executable(${PROJECT_NAME} 
 	src/main.cpp

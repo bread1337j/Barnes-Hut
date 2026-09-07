@@ -7,7 +7,7 @@ object::object(double x, double y, double mass){
 	this->x = x;
 	this->y = y;
 	this->mass = mass;
-	this->node = nullptr;
+	this->node = -1;
 	this->vx = 0; this->vy = 0;
 }
 
@@ -16,77 +16,84 @@ object::object(double x, double y){
 	this->x = x;
 	this->y = y;
 	this->mass = 1;
-	this->node = nullptr;
+	this->node = -1;
 	this->vx = 0; this->vy = 0;
 }
 
-void object::grabNode(quadTree* tree){
-	this->node = tree->root->divide(this->x, this->y);
+void object::grabNode(quadTree& tree){
+	//printf("Grabbing a node from a tree of size %lu\n", tree.size());
+	this->node = tree.access(tree.root).divide(tree, this->x, this->y);
 }
 
-void object::propogate(){
-	if(this->node == nullptr){
+void object::propogate(quadTree& tree){
+	if(this->node == -1){
 		return;
 	}
-	quadNode* node = this->node;
-	node->sx += this->x * this->mass; 
-	node->sy += this->y * this->mass;
-	node->smass += this->mass;
-	node->count += 1;
-	while(node->parent != nullptr){
-		node->parent->sx += this->x * this->mass;
-		node->parent->sy += this->y * this->mass;
-		node->parent->smass += this->mass;
-		node->parent->count += 1;
-		node = node->parent;
-	}
+	int node = this->node;
+	tree.access(node).sx += this->x * this->mass; 
+	tree.access(node).sy += this->y * this->mass;
+	tree.access(node).smass += this->mass;
+	tree.access(node).count += 1;
 }
 
-void object::refine(){
-	if(this->node == nullptr){
+void object::refine(quadTree& tree){
+	if(this->node == -1){
 		return;
 	}
-	while(this->node->children != nullptr){
-		double cx = this->node->x + this->node->size_x/2;
-		double cy = this->node->y + this->node->size_y/2;
+	while(tree.access(node).children != -1){
+		double cx = tree.access(node).x + tree.access(node).size_x/2;
+		double cy = tree.access(node).y + tree.access(node).size_x/2;
 		int i = 0;
 		if(this->x > cx) i += 2;
 		if(this->y > cy) i += 1;
-		this->node = this->node->children+i;
+		this->node = tree.access(node).children+i;
 	}
 }
 
 #define EPSILON 4
-void object::doGrav(quadNode* cluster, double dt){
+void object::doGrav(quadTree& tree, int cluster, double dt){
 	double G = 6.67e-9;
-
-	double dx = cluster->sx/(cluster->smass) - this->x; 
-	double dy = cluster->sy/(cluster->smass) - this->y;
+	//printf("Release me\n");
+	double dx = tree.access(cluster).sx/(tree.access(cluster).smass) - this->x; 
+	double dy = tree.access(cluster).sy/(tree.access(cluster).smass) - this->y;
 
 	double dmagsq = dx*dx+dy*dy+EPSILON*EPSILON;
 
-	double forceMag = G * cluster->smass / (dmagsq*sqrt(dmagsq));
+	double forceMag = G * tree.access(cluster).smass / (dmagsq*sqrt(dmagsq));
+	//printf("aaa\n");
 	
 	this->vx += dx*forceMag*dt;
 	this->vy += dy*forceMag*dt; 
 
 }
 
-void object::gravTick(quadNode* node, double dt){
-	double threshold = 0.5;	
-	if(node->count == 0){
+void object::gravTick(quadTree& tree, int index, double dt){
+	double threshold = 0.65;	
+	//printf("what\n");
+	quadNode& node = tree.access(index);
+	//printf("what2\n");
+	if(node.count == 0){
 		return;
 	}
-	double dx = node->sx/(node->smass) - this->x; 
-	double dy = node->sy/(node->smass) - this->y;
-	double ratio = node->size_x / sqrt(dx*dx + dy*dy);
-	if(node->children == NULL || ratio < threshold || node->count == 1){
-		doGrav(node, dt);
+	if(node.children == -1 || node.count == 1) { doGrav(tree, index, dt); return; }
+
+
+	//printf("what3\n");
+	double dx = node.sx/(node.smass) - this->x; 
+	double dy = node.sy/(node.smass) - this->y;
+	double ratio = node.size_x / sqrt(dx*dx + dy*dy);
+	//printf("what4\n");
+	if(ratio < threshold){
+		doGrav(tree, index, dt);
+		//printf("what5\n");
 	}else{
+		//printf("what6 %d\n", node.children);
 		for(int i=0; i<4; i++){
-			gravTick(node->children+i, dt);
+			gravTick(tree, node.children+i, dt);
 		}
+		//printf("what7\n");
 	}
+	//printf("que\n");
 
 }
 

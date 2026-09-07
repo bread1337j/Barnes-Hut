@@ -8,28 +8,28 @@
 #include <random>
 
 
-void traverseQuadNode(quadNode* node, float zoom){
+void traverseQuadNode(quadTree* tree, int node, float zoom){
 	Color c = GREEN;
-	DrawRectangleLinesEx({ (float)node->x, (float)node->y, (float)node->size_x, (float)node->size_y }, 1.0f / zoom, c);
-	/*if(node->count > 0){
-		DrawLineV({(float)node->sx/node->count, (float)node->sy/node->count}, { (float)node->x, (float)node->y }, YELLOW);
-		DrawLineV({(float)node->sx/node->count, (float)node->sy/node->count}, { (float)(node->x+node->size_x), (float)(node->y) }, YELLOW);
-		DrawLineV({(float)node->sx/node->count, (float)node->sy/node->count}, { (float)(node->x+node->size_x), (float)(node->y+node->size_y) }, YELLOW);
-		DrawLineV({(float)node->sx/node->count, (float)node->sy/node->count}, { (float)(node->x), (float)(node->y+node->size_y) }, YELLOW);
-		DrawCircleV({ (float)node->sx/node->count, (float) node->sy/node->count }, (float) node->size_x/100, RED);
+	DrawRectangleLinesEx({ (float)tree->access(node).x, (float)tree->access(node).y, (float)tree->access(node).size_x, (float)tree->access(node).size_x }, 1.0f / zoom, c);
+	/*if(tree->access(node).count > 0){
+		DrawLineV({(float)tree->access(node).sx/tree->access(node).count, (float)tree->access(node).sy/tree->access(node).count}, { (float)tree->access(node).x, (float)tree->access(node).y }, YELLOW);
+		DrawLineV({(float)tree->access(node).sx/tree->access(node).count, (float)tree->access(node).sy/tree->access(node).count}, { (float)(tree->access(node).x+tree->access(node).size_x), (float)(tree->access(node).y) }, YELLOW);
+		DrawLineV({(float)tree->access(node).sx/tree->access(node).count, (float)tree->access(node).sy/tree->access(node).count}, { (float)(tree->access(node).x+tree->access(node).size_x), (float)(tree->access(node).y+tree->access(node).size_y) }, YELLOW);
+		DrawLineV({(float)tree->access(node).sx/tree->access(node).count, (float)tree->access(node).sy/tree->access(node).count}, { (float)(tree->access(node).x), (float)(tree->access(node).y+tree->access(node).size_y) }, YELLOW);
+		DrawCircleV({ (float)tree->access(node).sx/tree->access(node).count, (float) tree->access(node).sy/tree->access(node).count }, (float) tree->access(node).size_x/100, RED);
 	}*/
-	if(node->children == NULL){
+	if(tree->access(node).children == -1){
 		return;
 	}
 	for(int i=0; i<4; i++){
-		traverseQuadNode(node->children+i, zoom);
+		traverseQuadNode(tree, tree->access(node).children+i, zoom);
 	}
 }
 
 
 int main(){
-
-	quadTree* qtree = new quadTree(0, 800);
+	//printf("Initializing starter vars\n");
+	quadTree* qtree = new quadTree(0, 0);
 	double leftCorner = 0;
 	double rightCorner = 0;
 	SetConfigFlags(FLAG_VSYNC_HINT);
@@ -49,11 +49,12 @@ int main(){
 
 	int objcount = 10;
 	//object** objarr = (object**) malloc(sizeof(object*)* objcount);
-	std::vector<object*> objarr = {};
+	//printf("Creating obj arr\n");
+	std::vector<object> objarr = {};
 	for(int i=0; i<objcount; i++){
-		objarr.push_back(new object(dist(e2)*800, dist(e2)*800, 6e10));
-		objarr[i]->vx = (dist(e2)-0.5)*0.1f;
-		objarr[i]->vy = (dist(e2)-0.5)*0.1f;
+		objarr.push_back(object(dist(e2)*800, dist(e2)*800, 6e10));
+		objarr[i].vx = (dist(e2)-0.5)*0.1f;
+		objarr[i].vy = (dist(e2)-0.5)*0.1f;
 	}
 	
 	char* title = (char*) (malloc(sizeof(char) * 100));
@@ -69,13 +70,13 @@ int main(){
 	while(!WindowShouldClose()){
 		
 		//qtree->root->divide(500, 400);
-		if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)){
+		if(IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
 			Vector2 pos = GetMousePosition();
 			pos = GetScreenToWorld2D(pos, camera);
-			for(int i=0; i<16; i++){
-				objarr.push_back(new object(dist(e2)*32 + pos.x, dist(e2)*32 + pos.y, 2e9));
-				objarr.back()->vx = (dist(e2)-0.5)*0.1f;
-				objarr.back()->vy = (dist(e2)-0.5)*0.1f;
+			for(int i=0; i<4; i++){
+				objarr.push_back(object((dist(e2)-0.5)*64 + pos.x, (dist(e2)-0.5)*64 + pos.y, 2e9));
+				objarr.back().vx = (dist(e2)-0.5)*0.1f;
+				objarr.back().vy = (dist(e2)-0.5)*0.1f;
 			}
 
 		}
@@ -116,36 +117,46 @@ int main(){
 			infinitisemalParticles = !infinitisemalParticles;
 		}
 
-		leftCorner = rightCorner = objarr[0]->x;
+		leftCorner = rightCorner = objarr[0].x;
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i]->physTick(dt);
-			if(objarr[i]->x > rightCorner){
-				rightCorner = objarr[i]->x;
+			objarr[i].physTick(dt);
+			if(objarr[i].x > rightCorner){
+				rightCorner = objarr[i].x;
 			}
-			if(objarr[i]->y > rightCorner){
-				rightCorner = objarr[i]->y;
+			if(objarr[i].y > rightCorner){
+				rightCorner = objarr[i].y;
 			}
-			if(objarr[i]->x < leftCorner){
-				leftCorner = objarr[i]->x;
+			if(objarr[i].x < leftCorner){
+				leftCorner = objarr[i].x;
 			}
-			if(objarr[i]->y < leftCorner){
-				leftCorner = objarr[i]->y;
+			if(objarr[i].y < leftCorner){
+				leftCorner = objarr[i].y;
 			}
 		}
-		
+		//printf("Trying to clear the qtree\n");
 		qtree->clear(leftCorner, rightCorner-leftCorner);
-		//printf("Building\n");
+		//printf("Cleared the qtree, new size should be 1, is: %lu\n", qtree->tree.size());
+		
+		//printf("Building the new qtree\n");
+		qtree->tree.reserve(1 + objarr.size() * 4);
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i]->grabNode(qtree);
+			objarr[i].grabNode(*qtree);
 		}
+		//printf("Refining the new qtree\n");
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i]->refine();
+			objarr[i].refine(*qtree);
 		}
+		//printf("Propogating the new qtree\n");
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i]->propogate();
+			objarr[i].propogate(*qtree);
 		}
+		qtree->propogate();
+		
+	
+
+		//printf("Doing gravity\n");
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i]->gravTick(qtree->root, dt); //cache be damned
+			objarr[i].gravTick(*qtree, qtree->root, dt); //cache be damned
 		}
 
 		//printf("Drawing\n");
@@ -154,18 +165,18 @@ int main(){
 				ClearBackground(BLACK);
 				for(int i=0; i<objarr.size(); i++){
 					if(infinitisemalParticles){
-						DrawCircleV({(float)objarr[i]->x, (float)objarr[i]->y}, 8 / camera.zoom, DARKBLUE);
+						DrawCircleV({(float)objarr[i].x, (float)objarr[i].y}, 8 / camera.zoom, DARKBLUE);
 					}else{
-						DrawCircleV({(float)objarr[i]->x, (float)objarr[i]->y}, 8, DARKBLUE);
+						DrawCircleV({(float)objarr[i].x, (float)objarr[i].y}, 8, DARKBLUE);
 					}
 				}
 				if(drawTree){
-					traverseQuadNode(qtree->root, camera.zoom);
+					traverseQuadNode(qtree, qtree->root, camera.zoom);
 				}
 
 			EndMode2D();
 		EndDrawing();
-		sprintf(title, "%f", GetFrameTime());
+		sprintf(title, "%f | %lu", 1/GetFrameTime(), objarr.size());
 		SetWindowTitle(title);
 		t+=dt;
 	}
