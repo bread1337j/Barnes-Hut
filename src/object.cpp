@@ -9,6 +9,7 @@ object::object(double x, double y, double mass){
 	this->mass = mass;
 	this->node = -1;
 	this->vx = 0; this->vy = 0;
+	this->ax = 0; this->ay = 0;
 }
 
 
@@ -18,6 +19,8 @@ object::object(double x, double y){
 	this->mass = 1;
 	this->node = -1;
 	this->vx = 0; this->vy = 0;
+	this->vx = 0; this->vy = 0;
+	this->ax = 0; this->ay = 0;
 }
 
 void object::grabNode(quadTree& tree){
@@ -59,16 +62,21 @@ void object::doGrav(quadTree& tree, int cluster, double dt){
 
 	double dmagsq = dx*dx+dy*dy+EPSILON*EPSILON;
 
-	double forceMag = G * tree.access(cluster).smass / (dmagsq*sqrt(dmagsq));
+	double forceMag = (G * tree.access(cluster).smass / (dmagsq*sqrt(dmagsq)));
 	//printf("aaa\n");
-	
-	this->vx += dx*forceMag*dt;
-	this->vy += dy*forceMag*dt; 
+
+
+	this->ax += dx*forceMag;
+	this->ay += dy*forceMag; 
 
 }
 
 void object::gravTick(quadTree& tree, int index, double dt){
+
+
 	double threshold = 0.65;	
+
+
 	//printf("what\n");
 	quadNode& node = tree.access(index);
 	//printf("what2\n");
@@ -97,7 +105,22 @@ void object::gravTick(quadTree& tree, int index, double dt){
 
 }
 
-void object::physTick(double dt){
-	this->x += vx * dt;
-	this->y += vy * dt;
+
+void object::kick(double dt){
+	this->vx += this->ax*0.5 * dt;
+	this->vy += this->ay*0.5 * dt;
+}
+
+void object::drift(quadTree& tree, double dt){
+
+	this->ax = 0; this->ay = 0;
+	//what not thinking to use a vector does to a man...C brain and its consequences or something...
+	gravTick(tree, 0, dt);
+
+}
+
+void object::move(double dt){
+	this->x += this->vx * dt;
+	this->y += this->vy * dt;
+
 }
