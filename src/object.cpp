@@ -74,7 +74,7 @@ void object::doGrav(quadTree& tree, int cluster, double dt){
 void object::gravTick(quadTree& tree, int index, double dt){
 
 
-	double threshold = 0.65;	
+	double threshold = 1;	
 
 
 	//printf("what\n");
@@ -114,7 +114,7 @@ void object::kick(double dt){
 void object::drift(quadTree& tree, double dt){
 
 	this->ax = 0; this->ay = 0;
-	//what not thinking to use a vector does to a man...C brain and its consequences or something...
+	//what not thinking to use a vector does to a man...C brain and its consequences or something...would rust have prevented this?
 	gravTick(tree, 0, dt);
 
 }
@@ -122,5 +122,19 @@ void object::drift(quadTree& tree, double dt){
 void object::move(double dt){
 	this->x += this->vx * dt;
 	this->y += this->vy * dt;
-
 }
+
+void object::calcKey(){
+	key = 0;
+	int intx = (int)this->x;
+	int inty = (int)this->y;
+	for(int i=0; i<62; i+=2){
+		key |= (intx & (1 << i));
+		key |= (inty & (1 << (i+1)));
+	}
+}
+
+bool object::operator < (const object other) {
+	return this->key < other.key;
+}
+

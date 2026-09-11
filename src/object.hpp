@@ -1,12 +1,14 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 #include "quadtree.hpp"
+#include <stdint.h>
 class object {
 	public:
 		double x, y, mass;
 		double vx, vy;
 		double ax, ay;
 		int node;
+		uint64_t key;
 		object(double x, double y, double mass);	
 		object(double x, double y);	
 		void grabNode(quadTree& tree);
@@ -18,6 +20,9 @@ class object {
 		void kick(double dt);
 		void drift(quadTree& tree, double dt);
 		void move(double dt);
+
+		void calcKey();
+		bool operator < (const object other);
 };
 
 #endif

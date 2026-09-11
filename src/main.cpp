@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
+#include <algorithm>
 #include "raylib.h"
 #include "raymath.h"
 #include "quadtree.hpp"
@@ -60,7 +61,7 @@ int main(){
 	char* title = (char*) (malloc(sizeof(char) * 100));
 	double t = 0;
 	int iters = 0;
-	double dtDef = 0.002;
+	double dtDef = 0.0001;
 	
 	double dt = dtDef;
 
@@ -69,18 +70,31 @@ int main(){
 	int drawTree = 0;
 	int infinitisemalParticles = 1;
 	int render = 1;
+
+	double spawnedMass = 8e13;
 	while(!WindowShouldClose()){
 		
 		//qtree->root->divide(500, 400);
 		if(IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
 			Vector2 pos = GetMousePosition();
 			pos = GetScreenToWorld2D(pos, camera);
-			for(int i=0; i<4; i++){
-				objarr.push_back(object((dist(e2)-0.5)*64 + pos.x, (dist(e2)-0.5)*64 + pos.y, 4e12));
+			for(int i=0; i<16; i++){
+				objarr.push_back(object((dist(e2)-0.5)*64 + pos.x, (dist(e2)-0.5)*64 + pos.y, spawnedMass));
 				objarr.back().vx = (dist(e2)-0.5)*0.1f;
 				objarr.back().vy = (dist(e2)-0.5)*0.1f;
 			}
-
+		}
+		if(IsKeyPressed(KEY_O)){
+			Vector2 pos = GetMousePosition();
+			pos = GetScreenToWorld2D(pos, camera);
+			int count = 128;
+			double dtheta = 360.0f / count;
+			for(int i=0; i<count; i++){
+#define TORADIAN M_PI / 180.0f 
+				objarr.push_back(object(sin(i*TORADIAN*dtheta) * 64 + pos.x, cos(i*TORADIAN*dtheta) * 64 + pos.y, spawnedMass)); 
+				objarr.back().vx = -cos(i*TORADIAN*dtheta) * 800;
+				objarr.back().vy = sin(i*TORADIAN*dtheta) * 800;
+			}
 		}
 
 		//printf("Clearing\n");
@@ -129,8 +143,6 @@ int main(){
 		//printf("Trying to clear the qtree\n");
 		//printf("Cleared the qtree, new size should be 1, is: %lu\n", qtree->tree.size());
 		
-		//printf("Building the new qtree\n");
-		//printf("Refining the new qtree\n");
 		for(int i=0; i<objarr.size(); i++){
 			objarr[i].refine(*qtree);
 		}
@@ -144,10 +156,10 @@ int main(){
 
 		//printf("Doing gravity\n");
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i].drift(*qtree, dt); //cache be damned
+			objarr[i].drift(*qtree, dt); 
 		}
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i].move(dt); //cache be damned
+			objarr[i].move(dt);
 			if(objarr[i].x > rightCorner){
 				rightCorner = objarr[i].x;
 			}
@@ -160,13 +172,16 @@ int main(){
 			if(objarr[i].y < leftCorner){
 				leftCorner = objarr[i].y;
 			}
+			objarr[i].calcKey();
 		}
 		qtree->tree.reserve(1 + objarr.size() * 4);
 		qtree->clear(leftCorner, rightCorner-leftCorner);
 		for(int i=0; i<objarr.size(); i++){
-			objarr[i].kick(dt); //cache be damned
+			objarr[i].kick(dt); 
 		}
+		std::sort(objarr.begin(), objarr.end());
 		for(int i=0; i<objarr.size(); i++){
+			
 			objarr[i].grabNode(*qtree);
 		}
 
