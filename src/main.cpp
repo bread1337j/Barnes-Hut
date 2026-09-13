@@ -6,6 +6,7 @@
 #include "raymath.h"
 #include "quadtree.hpp"
 #include "object.hpp"
+#include "multiprocessing.h"
 #include <random>
 
 
@@ -29,6 +30,7 @@ void traverseQuadNode(quadTree* tree, int node, float zoom){
 
 
 int main(){
+	cudaState* state = initCudaState();
 	//printf("Initializing starter vars\n");
 	quadTree* qtree = new quadTree(0, 0);
 	double leftCorner = 0;
@@ -75,6 +77,7 @@ int main(){
 
 	double spawnedMass = 8e13;
 
+	doObjectDrift(state, objarr, qtree);
 	while(!WindowShouldClose()){
 
 		//qtree->root->divide(500, 400);
@@ -199,7 +202,7 @@ int main(){
 				}
 			}
 			if(drawTree){
-				traverseQuadNode(qtree, qtree->root, camera.zoom);
+				traverseQuadNode(qtree, 0, camera.zoom);
 			}
 		}
 

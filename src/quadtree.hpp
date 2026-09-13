@@ -25,7 +25,6 @@ class quadNode {
 class quadTree {
 	public:
 		std::vector<quadNode> tree;
-		int root;
 		quadTree(double orig, double size);
 		void clear();
 		void clear(double orig, double size); //no non-squares allowed

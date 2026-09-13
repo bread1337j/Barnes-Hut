@@ -67,14 +67,13 @@ quadTree::quadTree(double orig, double size) {
 	printf("Initializing quad tree\n");
 	tree.reserve(100);
 	tree.push_back(quadNode(orig, orig, size, size, -1, 0));
-	root = 0;
 	printf("Initialized quad tree\n");
 }
 
 void quadTree::clear(){
-	double x = tree[root].x;
-	double y = tree[root].y;
-	double width = tree[root].size_x;
+	double x = tree[0].x;
+	double y = tree[0].y;
+	double width = tree[0].size_x;
 	tree.clear();
 	tree.push_back(quadNode(x, y, width, width, -1, 0));
 }

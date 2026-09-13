@@ -1,0 +1,15 @@
+CompileFlags:
+  Remove:
+    - -forward-unknown-to-host-compiler
+    - --generate-code=*
+    - -rdc=*
+    - --relocatable-device-code=*
+    - -Xcompiler=*
+    - -Xcudafe=*
+    - --options-file
+    - -ccbin*
+  Add:
+    - --cuda-path=/opt/cuda
+    - --cuda-gpu-arch=sm_89
+    - -Wno-unknown-cuda-version
+    - -fgpu-rdc

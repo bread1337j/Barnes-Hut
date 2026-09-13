@@ -25,7 +25,7 @@ object::object(double x, double y){
 
 void object::grabNode(quadTree& tree){
 	//printf("Grabbing a node from a tree of size %lu\n", tree.size());
-	this->node = tree.access(tree.root).divide(tree, this->x, this->y);
+	this->node = tree.access(0).divide(tree, this->x, this->y);
 }
 
 void object::propogate(quadTree& tree){
